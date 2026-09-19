@@ -1,0 +1,12 @@
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+export const departments=sqliteTable('departments',{name:text('name').primaryKey(),createdAt:text('created_at').notNull()});
+export const academicYears=sqliteTable('academic_years',{name:text('name').primaryKey()});
+export const users=sqliteTable('users',{email:text('email').primaryKey(),name:text('name').notNull(),role:text('role').notNull(),department:text('department').notNull(),createdAt:text('created_at').notNull(),updatedAt:text('updated_at').notNull()});
+export const submissions=sqliteTable('submissions',{id:text('id').primaryKey(),panel:text('panel').notNull(),year:text('year').notNull(),department:text('department').notNull(),createdBy:text('created_by').notNull(),status:text('status').notNull(),payload:text('payload').notNull(),version:integer('version').notNull(),createdAt:text('created_at').notNull(),updatedAt:text('updated_at').notNull()});
+export const revisions=sqliteTable('submission_revisions',{id:text('id').primaryKey(),submissionId:text('submission_id').notNull().references(()=>submissions.id),payload:text('payload').notNull(),createdAt:text('created_at').notNull(),createdBy:text('created_by').notNull()});
+export const evidenceDocuments=sqliteTable('evidence_documents',{id:text('id').primaryKey(),submissionId:text('submission_id').notNull().references(()=>submissions.id),objectKey:text('object_key').notNull(),payload:text('payload').notNull(),createdAt:text('created_at').notNull(),createdBy:text('created_by').notNull()});
+export const coordinatorReviews=sqliteTable('coordinator_reviews',{id:text('id').primaryKey(),submissionId:text('submission_id').notNull().references(()=>submissions.id),decision:text('decision').notNull(),comments:text('comments').notNull(),createdAt:text('created_at').notNull(),createdBy:text('created_by').notNull()});
+export const aiSummaries=sqliteTable('ai_summaries',{id:text('id').primaryKey(),department:text('department').notNull(),payload:text('payload').notNull(),createdAt:text('created_at').notNull(),createdBy:text('created_by').notNull()});
+export const auditLogs=sqliteTable('audit_logs',{id:text('id').primaryKey(),action:text('action').notNull(),entityId:text('entity_id').notNull(),createdAt:text('created_at').notNull(),createdBy:text('created_by').notNull()});
+// Each activity is stored in submissions with a versioned, validated, panel-specific payload.
+// This preserves exact source labels, including the original institutional annexures.
