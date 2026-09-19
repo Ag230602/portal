@@ -31,3 +31,29 @@ The prototype uses a shared submissions table with panel-specific validated JSON
 ## Verification
 
 `npm run build` compiles the Cloudflare-compatible site. `npx tsc --noEmit` checks types. Tests cover panel-source mapping and report counts/scope; integration checks verify anonymous access rejection and data lifecycle with local D1/R2. Evidence files are downloaded as attachments with MIME sniffing disabled. File size is limited to 20 MB. Production operations should additionally configure institutional retention, object-store backups, malware scanning, and periodic access reviews.
+
+## Mechanical Engineering access (GitHub Pages / Supabase)
+
+The portal owner is the single existing administrator identity captured by migration
+`202609190005_mechanical_owner_access.sql`. Ownership cannot be assigned through
+student enrollment, Google metadata, or the portal UI. Apply this migration after
+provisioning exactly one signed-in administrator; it preserves all existing data.
+
+In **Administration → Approve Mechanical students**, paste verified student Google
+account emails, one per line or separated by commas. Bulk approval supports more
+than 100 addresses; there is no application enrollment cap. Approve only students
+whose Mechanical Engineering enrollment you have checked. Unapproved accounts see
+an approval notice. Use **Student access → Revoke** to block future form access
+without deleting their existing responses.
+
+Approved students open directly into the annexure forms, can save their own drafts,
+attach evidence, and resubmit forms returned for correction. Submitted responses,
+response history, reports, summaries, exports, and the full roster are owner-only.
+Both RPC authorization and database/storage RLS enforce these restrictions.
+Existing non-Mechanical records remain visible to the owner; new submissions must
+be Mechanical Engineering. The institutional gender-equality panel remains owner-only.
+
+Run `tests/mechanical-access.sql` using the Supabase database query CLI for rollback-only
+checks of 151 approvals, counts above 100, department restrictions, owner privacy,
+student isolation, privilege escalation attempts, and revocation. Google OAuth audience
+settings and Supabase plan quotas are separate from application enrollment limits.

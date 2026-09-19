@@ -1,7 +1,7 @@
 begin;
 create temporary table naac_diagnosis(result text, sqlstate text, detail text) on commit drop;
 grant select,insert on naac_diagnosis to authenticated;
-do $$ declare u uuid;begin select user_id into u from auth.identities where provider='google' order by last_sign_in_at desc nulls last limit 1;perform set_config('request.jwt.claim.sub',u::text,true);end $$;
+do $$ declare u uuid;begin select user_id into u from public.naac_owner limit 1;perform set_config('request.jwt.claim.sub',u::text,true);end $$;
 set local role authenticated;
 do $$ declare data jsonb;code text;message text;begin
  begin
@@ -18,13 +18,13 @@ rollback;
 
 -- Requires one existing Google identity. All test records are rolled back.
 begin;
-do $$ declare u uuid;begin select user_id into u from auth.identities where provider='google' order by last_sign_in_at desc nulls last limit 1;perform set_config('request.jwt.claim.sub',u::text,true);end $$;
+do $$ declare u uuid;begin select user_id into u from public.naac_owner limit 1;perform set_config('request.jwt.claim.sub',u::text,true);end $$;
 set local role authenticated;
 do $$
 declare state jsonb;entry jsonb;saved jsonb;history jsonb;
 begin
  state=public.naac_portal('load','{}');
- entry=jsonb_build_object('id','','panel','5.1','year','2025–26','department',coalesce(nullif(state->'user'->>'department',''),'Electrical Engineering'),'respondent','Rollback regression check','designation','Test faculty','email',state->'user'->>'email','date',current_date::text,'data',jsonb_build_object('Name of Project guide','Test guide','Name of students','Synthetic regression student','Title of the project','Rollback regression project','Broader subject area covered','Test subject'),'version',0);
+ entry=jsonb_build_object('id','','panel','5.1','year','2025–26','department',coalesce(nullif(state->'user'->>'department',''),'Mechanical Engineering'),'respondent','Rollback regression check','designation','Test faculty','email',state->'user'->>'email','date',current_date::text,'data',jsonb_build_object('Name of Project guide','Test guide','Name of students','Synthetic regression student','Title of the project','Rollback regression project','Broader subject area covered','Test subject'),'version',0);
  saved=public.naac_portal('save',jsonb_build_object('entry',entry));
  saved=public.naac_portal('submit',jsonb_build_object('entry',saved->'entry'));
  if saved->'entry'->>'status'<>'Submitted' then raise exception 'Submission status regression';end if;
