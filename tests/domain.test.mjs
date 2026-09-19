@@ -1,8 +1,10 @@
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import ts from 'typescript';
 import fs from 'node:fs';
-const compiled = fs.mkdtempSync('/private/tmp/naac-tests-');
+const compiled = fs.mkdtempSync(join(tmpdir(),'naac-tests-'));
 for(const name of ['fields','reports','demo']){const source=fs.readFileSync(new URL('../lib/'+name+'.ts',import.meta.url),'utf8').replaceAll("'./fields'","'./fields.mjs'");fs.writeFileSync(compiled+'/'+name+'.mjs',ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText);}
 const {panels,missing}=await import(compiled+'/fields.mjs');
 const {compileReport}=await import(compiled+'/reports.mjs');

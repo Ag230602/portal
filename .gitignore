@@ -43,3 +43,6 @@ next-env.d.ts
 
 !.env.example
 *.tsbuildinfo
+
+/dist-github/
+/supabase/.temp/
