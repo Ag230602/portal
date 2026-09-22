@@ -53,3 +53,21 @@ There is no 100-student application cap. Google OAuth audience settings and Supa
 plan quotas are separate from application enrollment limits. Run
 `tests/mechanical-access.sql` through the Supabase database query CLI for rollback-only
 checks of immediate access, draft isolation, owner privacy, and privilege restrictions.
+
+## Gemini summaries from the owner dashboard
+
+In Reports & summaries, select Google Gemini, paste an API key from Google AI Studio,
+select the year/annexure scope, and generate the AI draft. The editable model ID
+must be available to that key and support structured JSON output. The key exists
+only in page memory until generation (or leaving the page), is sent over HTTPS to
+the authenticated Supabase report function, and is passed to Google in the
+`x-goog-api-key` header. It is never saved in database records, browser storage,
+source files, reports, or application logs. Re-enter the key for each generation.
+
+Only the owner can invoke AI summaries. Selected response fields and evidence
+metadata are sent to Google; uploaded file contents are not. The resulting draft
+retains source links and requires owner review. Original responses are unchanged.
+Existing OpenAI server configuration and count-based summaries remain available.
+Tests mock Gemini responses to cover request formatting, credential handling,
+quota/access errors, incomplete output, headings and source validation. A real
+Gemini API call requires the owner's key and available provider quota.
