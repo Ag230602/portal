@@ -35,3 +35,25 @@ export async function generateGeminiSummary(key:unknown,model:unknown,input:unkn
   return JSON.parse(output);
  }catch{throw new Error('Gemini did not return a complete summary. Try a smaller report scope.');}
 }
+
+export async function listGeminiModels(key:unknown,fetcher:typeof fetch=fetch):Promise<string[]>{
+ if(typeof key!=='string'||!key.trim()||key.length>512||/[\r\n]/.test(key))throw new Error('Enter your Gemini API key first.');
+ const models=new Set<string>();let pageToken='';
+ do{
+  const url=new URL('https://generativelanguage.googleapis.com/v1beta/models');url.searchParams.set('pageSize','1000');if(pageToken)url.searchParams.set('pageToken',pageToken);
+  let response:Response;
+  try{response=await fetcher(url.toString(),{headers:{'x-goog-api-key':key.trim()},signal:AbortSignal.timeout(20000)});}catch{throw new Error('Could not reach Gemini to check available models. Please try again.');}
+  if(!response.ok){
+   if(response.status===429)throw new Error('Gemini quota or rate limit reached. Check your Google AI Studio quota.');
+   if([400,401,403].includes(response.status))throw new Error('Gemini could not verify this key. Check the key and Google AI Studio permissions.');
+   throw new Error('Gemini model lookup is temporarily unavailable. Please try again.');
+  }
+  const data=await response.json();
+  for(const m of data.models||[]){const id=typeof m.name==='string'?m.name.replace(/^models\//,''):'';
+   if(/^gemini-[a-zA-Z0-9._-]{1,90}$/.test(id)&&m.supportedGenerationMethods?.includes('generateContent')&&!/(image|tts|audio|robotics|embedding|computer-use)/i.test(id))models.add(id);
+  }
+  pageToken=typeof data.nextPageToken==='string'?data.nextPageToken:'';
+ }while(pageToken);
+ if(!models.size)throw new Error('No Gemini text-generation models were returned for this key. Check your Google AI Studio project.');
+ return [...models].sort((a,b)=>Number(!a.includes('flash'))-Number(!b.includes('flash'))||Number(/preview|exp/.test(a))-Number(/preview|exp/.test(b))||b.localeCompare(a,undefined,{numeric:true}));
+}

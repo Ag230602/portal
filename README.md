@@ -57,8 +57,9 @@ checks of immediate access, draft isolation, owner privacy, and privilege restri
 ## Gemini summaries from the owner dashboard
 
 In Reports & summaries, select Google Gemini, paste an API key from Google AI Studio,
-select the year/annexure scope, and generate the AI draft. The editable model ID
-must be available to that key and support structured JSON output. The key exists
+select the year/annexure scope, and generate the AI draft. The Automatic model setting queries Google for available text-generation models using
+your key. Check available models optionally lets you select one explicitly; generation
+rechecks availability. Provider quota and structured-output support are still required. The key exists
 only in page memory until generation (or leaving the page), is sent over HTTPS to
 the authenticated Supabase report function, and is passed to Google in the
 `x-goog-api-key` header. It is never saved in database records, browser storage,

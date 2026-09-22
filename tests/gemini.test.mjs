@@ -40,3 +40,14 @@ test('validation rejects fabricated sources, missing headings and malformed sect
  }
  assert.deepEqual(validateSummary({sections:[{heading:'Projects',text:'Data not provided.',sources:[]}]},counted,[]),[{heading:'Projects',text:'Data not provided.',sources:[]}]);
 });
+test('model lookup uses returned text models, handles pagination and never puts key in URL',async()=>{
+ const {listGeminiModels}=await import(tmp+'/gemini.mjs');let calls=0;
+ const result=await listGeminiModels('test-key',async(url,options)=>{
+  assert.ok(!url.includes('test-key'));assert.equal(options.headers['x-goog-api-key'],'test-key');calls++;
+  if(calls===1)return Response.json({models:[{name:'models/gemini-test-pro',supportedGenerationMethods:['generateContent']},{name:'models/gemini-test-image',supportedGenerationMethods:['generateContent']},{name:'models/gemini-embedding',supportedGenerationMethods:['embedContent']}],nextPageToken:'next'});
+  assert.ok(url.includes('pageToken=next'));return Response.json({models:[{name:'models/gemini-test-flash',supportedGenerationMethods:['generateContent']}]});
+ });
+ assert.deepEqual(result,['gemini-test-flash','gemini-test-pro']);
+ await assert.rejects(()=>listGeminiModels('test',async()=>Response.json({models:[]})),/No Gemini text/);
+ await assert.rejects(()=>listGeminiModels('test',async()=>new Response('secret',{status:403})),/could not verify/);
+});

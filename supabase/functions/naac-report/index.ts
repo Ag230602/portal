@@ -2,7 +2,7 @@
 // optionally. Persists the result via the naac_portal RPC ("createReport"), which
 // re-derives the source snapshot from the database and rejects stale/tampered input.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { generateGeminiSummary, validateSummary } from '../_shared/gemini.ts';
+import { generateGeminiSummary, validateSummary, listGeminiModels } from '../_shared/gemini.ts';
 import { corsHeaders } from '../_shared/cors.ts';
 import { compileReport, type Entry, type Evidence } from '../_shared/reports.ts';
 
@@ -26,11 +26,16 @@ Deno.serve(async (req: Request) => {
     });
 
     const body = await req.json().catch(() => ({}));
-    if (body.action !== 'generate') return fail('Unknown action.', 400);
+    if (!['generate','geminiModels'].includes(body.action)) return fail('Unknown action.', 400);
 
     const { data: state, error: loadError } = await supabase.rpc('naac_portal', { action: 'load' });
     if (loadError) return fail(loadError.message, 400);
     if (state.user.role !== 'admin') return fail('Only the portal owner can generate summaries.', 403);
+
+    if (body.action === 'geminiModels') {
+      try {return new Response(JSON.stringify({models:await listGeminiModels(body.geminiKey)}),{headers:{...corsHeaders,'Content-Type':'application/json','Cache-Control':'no-store'}});}
+      catch(e){return fail(e instanceof Error?e.message:'Could not check Gemini models.',502);}
+    }
 
     const filter = {
       year: String(body.year || ''),
@@ -56,7 +61,10 @@ Deno.serve(async (req: Request) => {
       if (!['gemini', 'openai'].includes(provider)) return fail('Select a supported AI provider.', 400);
       if (provider === 'gemini') {
         try {
-          const generated = await generateGeminiSummary(body.geminiKey, body.geminiModel, {
+          const available = await listGeminiModels(body.geminiKey);
+          const model = body.geminiModel || available[0];
+          if (!available.includes(model)) return fail('The selected Gemini model is unavailable. Check models again or choose Automatic.', 400);
+          const generated = await generateGeminiSummary(body.geminiKey, model, {
             countedSections: sections,
             records: entries.map(({id,panel,year,department,data})=>({id,panel,year,department,data})),
             evidence: files.map(({id,entryId,type,status,name})=>({id,entryId,type,status,name})),
